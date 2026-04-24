@@ -184,4 +184,23 @@
   calcularDistanciaAuto();
 </script>
 
+<script>
+    // AQUÍ PEGAS EL CÓDIGO DE VALIDACIÓN
+    const limitesLegales = {
+      "sencillo": { max: 10, nombre: "Camión 2 ejes (Tipo 2DA)" },
+      "mediano": { max: 18, nombre: "Camión Mediano (Tipo 3)" },
+      "trailer": { max: 32, nombre: "Tráiler Pesado (Tipo 3S2/3S3)" }
+    };
+
+    function validarPesoLegal() {
+      const tipo = document.getElementById('vehiculo_tipo').value;
+      const pesoInput = document.getElementById('peso_ton');
+      const limite = limitesLegales[tipo].max;
+      
+      if (parseFloat(pesoInput.value) > limite) {
+        alert(`⚠️ VIOLACIÓN DE NORMA MTOP: El ${limitesLegales[tipo].nombre} tiene un límite legal de carga útil de ${limite} toneladas.`);
+        pesoInput.value = limite;
+      }
+    }
+  </script>
 </body></html>
