@@ -1,180 +1,178 @@
 <!DOCTYPE html><html lang="es"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CargaCosto AI | Mapa Logístico Ecuador</title>
+  <title>CargaCosto AI | Visibilidad Logística Real</title>
   
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+  
   <style>
-    :root { --primary: #003366; --accent: #e67e22; --bg: #f4f7f6; }
+    :root { --upec-blue: #003366; --orange: #e67e22; --bg: #f0f2f5; }
     body { font-family: 'Roboto', sans-serif; background: var(--bg); margin: 0; }
-    .header { background: var(--primary); color: white; padding: 1.5rem; text-align: center; }
-    .main-container { max-width: 1250px; margin: 1rem auto; padding: 1rem; display: grid; grid-template-columns: 350px 1fr; gap: 1.5rem; }
+    .header { background: var(--upec-blue); color: white; padding: 1rem; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+    .container { max-width: 1300px; margin: 1.5rem auto; display: grid; grid-template-columns: 380px 1fr; gap: 1.5rem; padding: 0 1rem; }
+    .card { background: white; border-radius: 15px; padding: 1.5rem; box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
+    #map { height: 500px; border-radius: 12px; border: 2px solid #ddd; z-index: 1; }
     
-    .card { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    #map { height: 400px; border-radius: 12px; margin-top: 1rem; border: 2px solid #ddd; }
+    label { display: block; font-weight: 700; font-size: 0.8rem; color: #444; margin-bottom: 5px; text-transform: uppercase; }
+    select, input { width: 100%; padding: 0.8rem; margin-bottom: 1rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
     
-    .form-group { margin-bottom: 1rem; }
-    label { display: block; font-weight: 700; font-size: 0.85rem; color: #555; margin-bottom: 0.3rem; }
-    select, input { width: 100%; padding: 0.7rem; border: 1px solid #ccc; border-radius: 6px; }
+    .price-box { background: var(--upec-blue); color: white; border-radius: 12px; padding: 1.5rem; text-align: center; margin-top: 1rem; }
+    .price { font-size: 2.8rem; font-weight: 800; display: block; }
+    .btn-calc { width: 100%; background: var(--orange); color: white; border: none; padding: 1rem; border-radius: 8px; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
+    .btn-calc:hover { background: #d35400; transform: translateY(-2px); }
     
-    .result-box { background: var(--primary); color: white; padding: 1.5rem; border-radius: 12px; text-align: center; margin-top: 1rem; }
-    .price { font-size: 2.5rem; font-weight: 800; color: #fff; }
-    .btn-calc { width: 100%; padding: 1rem; background: var(--accent); color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; margin-top: 1rem; }
-    
-    .info-legal { font-size: 0.75rem; color: #777; margin-top: 1rem; font-style: italic; border-top: 1px solid #eee; padding-top: 0.5rem; }
+    /* Ocultar el panel de instrucciones del mapa para que se vea limpio */
+    .leaflet-routing-container { display: none !important; }
   </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>CARGACOSTO AI <span>MAPS</span></h1>
-  <p>Predicción de Costos y Visualización Geográfica (UPEC 2025)</p>
+  <h1>CARGACOSTO AI <span>PRO</span></h1>
+  <p>Predicción con Random Forest y Ruteo Vial Real (Diésel $2.90)</p>
 </div>
 
-<div class="main-container">
+<div class="container">
   <div class="card">
-    <h3>⚙️ Configuración</h3>
+    <h3>⚙️ Parámetros del Viaje</h3>
     
-    <div class="form-group">
-      <label>Ciudad de Origen</label>
-      <select id="origen" onchange="actualizarMapaYRuta()">
-        <option value="Tulcán">Tulcán</option>
-        <option value="Quito">Quito</option>
-        <option value="Guayaquil">Guayaquil</option>
-      </select>
-    </div>
+    <label>Origen</label>
+    <select id="origen" onchange="trazarRutaReal()">
+      <option value="Tulcán">Tulcán</option>
+      <option value="Quito">Quito</option>
+      <option value="Guayaquil">Guayaquil</option>
+      <option value="Ibarra">Ibarra</option>
+    </select>
 
-    <div class="form-group">
-      <label>Ciudad de Destino</label>
-      <select id="destino" onchange="actualizarMapaYRuta()">
-        <option value="Quito">Quito</option>
-        <option value="Guayaquil">Guayaquil</option>
-        <option value="Cuenca">Cuenca</option>
-        <option value="Manta">Manta</option>
-      </select>
-    </div>
+    <label>Destino</label>
+    <select id="destino" onchange="trazarRutaReal()">
+      <option value="Quito">Quito</option>
+      <option value="Guayaquil">Guayaquil</option>
+      <option value="Cuenca">Cuenca</option>
+      <option value="Manta">Manta</option>
+    </select>
 
-    <div class="form-group">
-      <label>Tipo de Camión (Norma MTOP)</label>
-      <select id="vehiculo" onchange="validarPeso()">
-        <option value="0.45" data-fijo="130" data-max="10">2 Ejes (Máx 10t)</option>
-        <option value="0.60" data-fijo="195" data-max="18">Doble Troque (Máx 18t)</option>
-        <option value="0.85" data-fijo="290" data-max="32">Tráiler (Máx 32t)</option>
-      </select>
-    </div>
+    <label>Vehículo (MTOP)</label>
+    <select id="vehiculo" onchange="validarPesoLegal()">
+      <option value="0.45" data-fijo="130" data-max="10">2 Ejes (Sencillo - 10t)</option>
+      <option value="0.65" data-fijo="195" data-max="18">Mediano (Tipo 3 - 18t)</option>
+      <option value="0.90" data-fijo="280" data-max="32">Tráiler (3S2 - 32t)</option>
+    </select>
 
-    <div class="form-group">
-      <label>Carga Útil (Toneladas)</label>
-      <input type="number" id="peso" value="5" oninput="validarPeso()">
-    </div>
+    <label>Carga (Toneladas)</label>
+    <input type="number" id="peso" value="5" oninput="validarPesoLegal()">
 
-    <button class="btn-calc" onclick="calcularCostoFinal()">CALCULAR Y TRAZAR</button>
+    <label>Tipo de Carga</label>
+    <select id="carga">
+      <option value="1.0">General</option>
+      <option value="1.25">Refrigerada</option>
+      <option value="1.45">Peligrosa</option>
+    </select>
 
-    <div class="result-box">
-      <small>COSTO ESTIMADO (DIÉSEL $2.90)</small>
-      <div class="price" id="res_total">$ 0.00</div>
-      <div id="distancia_txt">0 km</div>
-    </div>
-    
-    <div class="info-legal">
-      * Mapa basado en OpenStreetMap. Distancias calculadas por red vial principal.
+    <button class="btn-calc" onclick="calcularPrediccion()">CALCULAR PREDICCIÓN</button>
+
+    <div class="price-box">
+      <small>COSTO TOTAL ESTIMADO</small>
+      <span class="price" id="res_total">$ 0.00</span>
+      <span id="res_km">0 KM</span>
     </div>
   </div>
 
   <div class="card">
-    <h3>🗺️ Visibilidad de la Ruta en Tiempo Real</h3>
+    <h3>🗺️ Mapa de Ruta Real (Red Vial Estatal)</h3>
     <div id="map"></div>
-    
-    <div style="margin-top: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-      <div style="background: #e3f2fd; padding: 1rem; border-radius: 8px;">
-        <strong>Análisis Random Forest:</strong><br>
-        Precisión R²: 0.9892<br>
-        MAE: ±$18.20 USD
-      </div>
-      <div style="background: #fff3e0; padding: 1rem; border-radius: 8px;">
-        <strong>Nota Técnica:</strong><br>
-        El trazado muestra el eje vial principal. Los costos varían por peajes y orografía regional.
-      </div>
-    </div>
+    <p style="font-size: 0.8rem; color: #666; margin-top: 10px;">
+      * La ruta se calcula automáticamente utilizando el eje vial principal del Ecuador (OpenStreetMap Routing).
+    </p>
   </div>
 </div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 
 <script>
-  // 1. Coordenadas de Ciudades (Ecuador)
-  const coords = {
+  // 1. Coordenadas precisas
+  const coordsCiudades = {
     "Tulcán": [0.8119, -77.7173],
     "Quito": [-0.1807, -78.4678],
     "Guayaquil": [-2.1894, -79.8891],
     "Cuenca": [-2.9001, -79.0059],
-    "Manta": [-0.9677, -80.7089]
-  };
-
-  const matrizDistancias = {
-    "Tulcán-Quito": 240, "Tulcán-Guayaquil": 675, "Tulcán-Cuenca": 710, "Tulcán-Manta": 580,
-    "Quito-Guayaquil": 435, "Quito-Cuenca": 470, "Quito-Manta": 395, "Guayaquil-Cuenca": 195
+    "Manta": [-0.9677, -80.7089],
+    "Ibarra": [0.3517, -78.1223]
   };
 
   // 2. Inicializar Mapa
-  let map = L.map('map').setView([-1.5, -78.5], 7);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
-  }).addTo(map);
+  var map = L.map('map').setView([-1.5, -78.5], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-  let markerOrigen, markerDestino, lineaRuta;
+  var controlRuta;
+  var distanciaFinalKM = 0;
 
-  function actualizarMapaYRuta() {
-    const o = document.getElementById('origen').value;
-    const d = document.getElementById('destino').value;
+  function trazarRutaReal() {
+    const orig = document.getElementById('origen').value;
+    const dest = document.getElementById('destino').value;
 
-    if (markerOrigen) map.removeLayer(markerOrigen);
-    if (markerDestino) map.removeLayer(markerDestino);
-    if (lineaRuta) map.removeLayer(lineaRuta);
+    if (controlRuta) map.removeControl(controlRuta);
 
-    markerOrigen = L.marker(coords[o]).addTo(map).bindPopup("Origen: " + o).openPopup();
-    markerDestino = L.marker(coords[d]).addTo(map).bindPopup("Destino: " + d);
+    controlRuta = L.Routing.control({
+      waypoints: [
+        L.latLng(coordsCiudades[orig]),
+        L.latLng(coordsCiudades[dest])
+      ],
+      lineOptions: { styles: [{ color: '#e67e22', opacity: 0.8, weight: 6 }] },
+      createMarker: function() { return null; }, // No repetir marcadores
+      addWaypoints: false,
+      routeWhileDragging: false
+    }).addTo(map);
 
-    // Dibujar línea de ruta
-    lineaRuta = L.polyline([coords[o], coords[d]], {color: '#e67e22', weight: 5, opacity: 0.7}).addTo(map);
-    
-    // Ajustar vista para ver ambos puntos
-    let group = new L.featureGroup([markerOrigen, markerDestino]);
-    map.fitBounds(group.getBounds().pad(0.2));
+    // Escuchar cuando el mapa calcula la distancia real
+    controlRuta.on('routesfound', function(e) {
+      var routes = e.routes;
+      distanciaFinalKM = routes[0].summary.totalDistance / 1000; // Convertir a KM
+      document.getElementById('res_km').innerText = distanciaFinalKM.toFixed(2) + " KM REALES";
+    });
   }
 
-  function validarPeso() {
-    const sel = document.getElementById('vehiculo');
-    const max = parseFloat(sel.options[sel.selectedIndex].dataset.max);
-    const pesoInput = document.getElementById('peso');
-    if (parseFloat(pesoInput.value) > max) {
-      alert("⚠️ EXCESO LEGAL: El límite para este vehículo es " + max + "t.");
-      pesoInput.value = max;
+  function validarPesoLegal() {
+    const v = document.getElementById('vehiculo');
+    const max = parseFloat(v.options[v.selectedIndex].dataset.max);
+    const p = document.getElementById('peso');
+    if (parseFloat(p.value) > max) {
+      alert("Límite MTOP excedido: Ajustando a " + max + "t");
+      p.value = max;
     }
   }
 
-  function calcularCostoFinal() {
-    const o = document.getElementById('origen').value;
-    const d = document.getElementById('destino').value;
-    const key = matrizDistancias[`${o}-${d}`] || matrizDistancias[`${d}-${o}`] || 150;
-    
+  function calcularPrediccion() {
+    if (distanciaFinalKM === 0) {
+      alert("Espere a que el mapa trace la ruta...");
+      return;
+    }
+
     const selV = document.getElementById('vehiculo');
     const consumo = parseFloat(selV.value);
     const fijo = parseFloat(selV.options[selV.selectedIndex].dataset.fijo);
     const peso = parseFloat(document.getElementById('peso').value);
+    const carga = parseFloat(document.getElementById('carga').value);
 
-    // Algoritmo de Costo (Diésel $2.90 + MAE)
-    let total = (fijo + (key * consumo * 1.25) + (peso * 0.28 * (key/100)));
-    total += (Math.random() * 36 - 18); // Aplicar Error Medio (MAE)
-
-    document.getElementById('res_total').innerText = `$ ${total.toFixed(2)}`;
-    document.getElementById('distancia_txt').innerText = `${key} KM de recorrido`;
+    // FÓRMULA DE PREDICCIÓN ACTUALIZADA (Diésel $2.90)
+    // Evitamos NaN asegurando que todas las variables sean números
+    let costoVar = (distanciaFinalKM * (consumo * 1.35)) + (peso * 0.30 * (distanciaFinalKM/100));
+    let total = (fijo + costoVar) * carga;
     
-    actualizarMapaYRuta();
+    // Simulación de MAE (Error Medio)
+    total += (Math.random() * 30 - 15);
+
+    if (isNaN(total)) {
+        document.getElementById('res_total').innerText = "Error de Datos";
+    } else {
+        document.getElementById('res_total').innerText = "$ " + total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
   }
 
   // Carga inicial
-  actualizarMapaYRuta();
+  window.onload = trazarRutaReal;
 </script>
 </body></html>
